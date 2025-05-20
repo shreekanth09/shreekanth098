@@ -1,110 +1,50 @@
-'use strict';
+// Select elements
+const startBtn = document.getElementById('start-btn');
+const output = document.getElementById('output');
 
-/*
-console.log(document.querySelector('.message').textContent);
-document.querySelector('.message').textContent = '🎉 Correct Number!';
+// Check for browser support
+if ('speechRecognition' in window || 'webkitSpeechRecognition' in window) {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const recognition = new SpeechRecognition();
 
-document.querySelector('.number').textContent = 13;
-document.querySelector('.score').textContent = 10;
+  // Configure recognition
+  recognition.lang = 'en-US';
+  recognition.interimResults = false;
 
-document.querySelector('.guess').value = 23;
-console.log(document.querySelector('.guess').value);
-*/
+  // Start recognition on button click
+  startBtn.addEventListener('click', () => {
+    recognition.start();
+    output.textContent = 'Listening...';
+  });
 
-let secretNumber = Math.trunc(Math.random() * 20) + 1;
-let score = 20;
-let highscore = 0;
+  // Process results
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript.toLowerCase();
+    output.textContent = "You said: ${transcript}";
+    respond(transcript);
+  };
 
-const displayMessage = function (message) {
-  document.querySelector('.message').textContent = message;
-};
+  // Handle errors
+  recognition.onerror = (event) => {
+    output.textContent = "Error: ${event.error}";
+  };
 
-document.querySelector('.check').addEventListener('click', function () {
-  const guess = Number(document.querySelector('.guess').value);
-  console.log(guess, typeof guess);
+  // Provide a response
+  function respond(transcript) {
+    const speechSynthesis = window.speechSynthesis;
+    const utterance = new SpeechSynthesisUtterance();
 
-  // When there is no input
-  if (!guess) {
-    // document.querySelector('.message').textContent = '⛔️ No number!';
-    displayMessage('⛔️ No number!');
-
-    // When player wins
-  } else if (guess === secretNumber) {
-    // document.querySelector('.message').textContent = '🎉 Correct Number!';
-    displayMessage('🎉 Correct Number!');
-    document.querySelector('.number').textContent = secretNumber;
-
-    document.querySelector('body').style.backgroundColor = '#60b347';
-    document.querySelector('.number').style.width = '30rem';
-
-    if (score > highscore) {
-      highscore = score;
-      document.querySelector('.highscore').textContent = highscore;
-    }
-
-    // When guess is wrong
-  } else if (guess !== secretNumber) {
-    if (score > 1) {
-      // document.querySelector('.message').textContent =
-      // guess > secretNumber ? '📈 Too high!' : '📉 Too low!';
-      displayMessage(guess > secretNumber ? '📈 Too high!' : '📉 Too low!');
-      score--;
-      document.querySelector('.score').textContent = score;
+    if (transcript.includes('hello')) {
+      utterance.text = 'Hello! How can I assist you today?';
+    } else if (transcript.includes('time')) {
+      const now = new Date();
+      utterance.text = "The time is ${now.getHours()}:${now.getMinutes()}";
     } else {
-      // document.querySelector('.message').textContent = '💥 You lost the game!';
-      displayMessage('💥 You lost the game!');
-      document.querySelector('.score').textContent = 0;
+      utterance.text = "I'm sorry, I didn't understand that.";
     }
+
+    speechSynthesis.speak(utterance);
   }
-
-  //   // When guess is too high
-  // } else if (guess > secretNumber) {
-  //   if (score > 1) {
-  //     document.querySelector('.message').textContent = '📈 Too high!';
-  //     score--;
-  //     document.querySelector('.score').textContent = score;
-  //   } else {
-  //     document.querySelector('.message').textContent = '💥 You lost the game!';
-  //     document.querySelector('.score').textContent = 0;
-  //   }
-
-  //   // When guess is too low
-  // } else if (guess < secretNumber) {
-  //   if (score > 1) {
-  //     document.querySelector('.message').textContent = '📉 Too low!';
-  //     score--;
-  //     document.querySelector('.score').textContent = score;
-  //   } else {
-  //     document.querySelector('.message').textContent = '💥 You lost the game!';
-  //     document.querySelector('.score').textContent = 0;
-  //   }
-  // }
-});
-
-document.querySelector('.again').addEventListener('click', function () {
-  score = 20;
-  secretNumber = Math.trunc(Math.random() * 20) + 1;
-
-  // document.querySelector('.message').textContent = 'Start guessing...';
-  displayMessage('Start guessing...');
-  document.querySelector('.score').textContent = score;
-  document.querySelector('.number').textContent = '?';
-  document.querySelector('.guess').value = '';
-
-  document.querySelector('body').style.backgroundColor = '#222';
-  document.querySelector('.number').style.width = '15rem';
-});
-
-///////////////////////////////////////
-// Coding Challenge #1
-
-/* 
-Implement a game rest functionality, so that the player can make a new guess! Here is how:
-
-1. Select the element with the 'again' class and attach a click event handler
-2. In the handler function, restore initial values of the score and secretNumber variables
-3. Restore the initial conditions of the message, number, score and guess input field
-4. Also restore the original background color (#222) and number width (15rem)
-
-GOOD LUCK 😀
-*/
+} else {
+  output.textContent = 'Your browser does not support the Speech API.';
+}
